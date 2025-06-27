@@ -1,0 +1,65 @@
+name: Hotel Management System CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: mypwd
+          MYSQL_DATABASE: hoteldb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -pmypwd"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++ libmysqlclient-dev libmysqlcppconn-dev
+
+    # Building the table creation program
+    - name: Build create-entities
+      run: |
+        g++ -std=c++11 -o create_entities create-entities.cpp \
+          -I/usr/include/mysql \
+          -L/usr/lib/mysql \
+          -lmysqlclient -lmysqlcppconn
+
+    - name: Wait for MySQL to be ready
+      run: |
+        for i in {1..30}; do
+          mysql -h 127.0.0.1 -P 3306 -u root -pmypwd -e 'SELECT 1;' && break
+          echo "MySQL not ready yet. Retrying in 3 seconds..."
+          sleep 3
+        done
+
+    # Running the table creation program
+    - name: Create database tables
+      env:
+        DB_ROOT_PASSWORD: mypwd
+      run: |
+        ./create_entities
+
+    # Building the main program
+    - name: Build hotel_manager
+      run: |
+        g++ -std=c++11 -o hotel_manager src/*.cpp \
+          -I/usr/include/mysql \
+          -L/usr/lib/mysql \
+          -lmysqlclient -lmysqlcppconn
+
