@@ -22,7 +22,7 @@ jobs:
     - name: Install C++ compiler
       run: sudo apt-get install -y g++
 
-- name: Start MySQL service
+    - name: Start MySQL service
       run: |
         sudo systemctl start mysql
         sudo systemctl enable mysql
