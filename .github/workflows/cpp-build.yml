@@ -30,43 +30,35 @@ jobs:
         sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mypwd';"
         sudo mysql -e "FLUSH PRIVILEGES;"
 
-    - name: Debug - Show file contents
+    - name: Debug compilation with continue on error
       run: |
-        echo "=== File sizes ==="
-        ls -la *.cpp
-        echo "=== First 10 lines of each file ==="
-        head -10 create-entities.cpp
-        head -10 hotel-management.cpp
-
-    - name: Try compiling create-entities.cpp
-      run: |
-        echo "=== Compiling create-entities.cpp ==="
-        g++ create-entities.cpp -o create-entities -lmysqlclient -v 2>&1 || echo "Compilation failed, continuing..."
-
-    - name: Try compiling hotel-management.cpp  
-      run: |
-        echo "=== Compiling hotel-management.cpp ==="
-        g++ hotel-management.cpp -o hotel-management -lmysqlclient -v 2>&1 || echo "Compilation failed, continuing..."
-
-    - name: Check if executables were created
-      run: |
-        echo "=== Checking for compiled executables ==="
+        echo "=== Starting compilation debug ==="
+        set +e  # لا تتوقف عند الأخطاء
+        
+        echo "1. Compiling create-entities.cpp:"
+        g++ create-entities.cpp -o create-entities -lmysqlclient
+        echo "Exit code: $?"
+        
+        echo "2. Compiling hotel-management.cpp:"
+        g++ hotel-management.cpp -o hotel-management -lmysqlclient  
+        echo "Exit code: $?"
+        
+        echo "3. Checking executables:"
         ls -la create-entities hotel-management 2>&1 || echo "Executables not found"
+        
+        echo "4. File info:"
+        file create-entities.cpp hotel-management.cpp 2>&1
+        wc -l create-entities.cpp hotel-management.cpp
+        
+        set -e  # العودة إلى وضع التوقف عند الأخطاء
 
-    - name: Try running create-entities
+    - name: Run if compilation succeeded
       run: |
-        if [ -f "./create-entities" ]; then
-          echo "=== Running create-entities ==="
+        if [ -f "./create-entities" ] && [ -f "./hotel-management" ]; then
+          echo "=== Running programs ==="
           ./create-entities
-        else
-          echo "create-entities executable not found - skipping"
-        fi
-
-    - name: Try running hotel-management
-      run: |
-        if [ -f "./hotel-management" ]; then
-          echo "=== Running hotel-management ==="
           ./hotel-management
         else
-          echo "hotel-management executable not found - skipping"
+          echo "=== Compilation failed - executables not found ==="
+          exit 1
         fi
