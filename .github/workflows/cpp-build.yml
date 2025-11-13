@@ -14,6 +14,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Debug - List project structure
+      run: |
+        echo "=== Project Structure ==="
+        find . -type f -name "*.cpp" | head -20
+        ls -la
+        echo "=== hotel_management_system contents ==="
+        ls -la hotel_management_system/
+
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -30,42 +38,22 @@ jobs:
         sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mypwd';"
         sudo mysql -e "FLUSH PRIVILEGES;"
 
-    - name: List files (for debugging)
-      run: ls -la
-
     - name: Compile create-entities.cpp
       run: |
-        if [ -f "create-entities.cpp" ]; then
-          g++ create-entities.cpp -o create-entities -lmysqlclient
-        else
-          echo "ERROR: create-entities.cpp not found!"
-          ls -la
-          exit 1
-        fi
+        cd hotel_management_system
+        g++ create-entities.cpp -o create-entities -lmysqlclient
 
     - name: Compile hotel-management.cpp
       run: |
-        if [ -f "hotel-management.cpp" ]; then
-          g++ hotel-management.cpp -o hotel-management -lmysqlclient
-        else
-          echo "ERROR: hotel-management.cpp not found!"
-          exit 1
-        fi
+        cd hotel_management_system
+        g++ hotel-management.cpp -o hotel-management -lmysqlclient
 
     - name: Run create-entities
       run: |
-        if [ -f "./create-entities" ]; then
-          ./create-entities
-        else
-          echo "ERROR: create-entities executable not found!"
-          exit 1
-        fi
+        cd hotel_management_system
+        ./create-entities
 
     - name: Run hotel-management
       run: |
-        if [ -f "./hotel-management" ]; then
-          ./hotel-management
-        else
-          echo "ERROR: hotel-management executable not found!"
-          exit 1
-        fi
+        cd hotel_management_system
+        ./hotel-management
