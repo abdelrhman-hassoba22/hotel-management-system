@@ -14,13 +14,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install MySQL
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y mysql-server libmysqlclient-dev
-
-    - name: Install C++ compiler
-      run: sudo apt-get install -y g++
+        sudo apt-get install -y mysql-server libmysqlclient-dev g++
 
     - name: Start MySQL service
       run: |
@@ -33,15 +30,42 @@ jobs:
         sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mypwd';"
         sudo mysql -e "FLUSH PRIVILEGES;"
 
-    - name: Compile create-entities.cpp
-      run: g++ create-entities.cpp -o create-entities -lmysqlclient
+    - name: List files (for debugging)
+      run: ls -la
 
-    - name: Run create-entities
-      run: ./create-entities
+    - name: Compile create-entities.cpp
+      run: |
+        if [ -f "create-entities.cpp" ]; then
+          g++ create-entities.cpp -o create-entities -lmysqlclient
+        else
+          echo "ERROR: create-entities.cpp not found!"
+          ls -la
+          exit 1
+        fi
 
     - name: Compile hotel-management.cpp
-      run: g++ hotel-management.cpp -o hotel-management -lmysqlclient
+      run: |
+        if [ -f "hotel-management.cpp" ]; then
+          g++ hotel-management.cpp -o hotel-management -lmysqlclient
+        else
+          echo "ERROR: hotel-management.cpp not found!"
+          exit 1
+        fi
+
+    - name: Run create-entities
+      run: |
+        if [ -f "./create-entities" ]; then
+          ./create-entities
+        else
+          echo "ERROR: create-entities executable not found!"
+          exit 1
+        fi
 
     - name: Run hotel-management
-      run: ./hotel-management
-
+      run: |
+        if [ -f "./hotel-management" ]; then
+          ./hotel-management
+        else
+          echo "ERROR: hotel-management executable not found!"
+          exit 1
+        fi
