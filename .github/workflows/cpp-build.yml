@@ -14,14 +14,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Debug - List project structure
-      run: |
-        echo "=== Project Structure ==="
-        find . -type f -name "*.cpp" | head -20
-        ls -la
-        echo "=== hotel_management_system contents ==="
-        ls -la hotel_management_system/
-
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -39,21 +31,13 @@ jobs:
         sudo mysql -e "FLUSH PRIVILEGES;"
 
     - name: Compile create-entities.cpp
-      run: |
-        cd hotel_management_system
-        g++ create-entities.cpp -o create-entities -lmysqlclient
+      run: g++ create-entities.cpp -o create-entities -lmysqlclient
 
     - name: Compile hotel-management.cpp
-      run: |
-        cd hotel_management_system
-        g++ hotel-management.cpp -o hotel-management -lmysqlclient
+      run: g++ hotel-management.cpp -o hotel-management -lmysqlclient
 
     - name: Run create-entities
-      run: |
-        cd hotel_management_system
-        ./create-entities
+      run: ./create-entities
 
     - name: Run hotel-management
-      run: |
-        cd hotel_management_system
-        ./hotel-management
+      run: ./hotel-management
